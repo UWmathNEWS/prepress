@@ -55,15 +55,21 @@ class Article:
         self.content: BeautifulSoup = None
         self.postscript: BeautifulSoup = None
 
-    def get_image_location(self, file: str) -> str:
-        #generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
+    def get_article_slug(self) -> str:
+        # generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
+        # plus hash of article content to prevent article title collisions
         file_prefix = re.sub(r"\W",  "", self.title[0:10].encode('ascii', errors='ignore').decode().replace(' ', '_'))
-        filename = file_prefix + '_' + file
+        article_hash = hashlib.sha1(str(self.content).encode("utf-8")).hexdigest()[:6]
+        return file_prefix + "_" + article_hash
+
+    def get_image_location(self, file: str, index: int) -> str:
+        article_slug = self.get_article_slug()
+        filename = f"{article_slug}_{index:03}_{file}"
         return os.path.join(ASSET_DIR, 'img', filename)
 
     def get_pdf_location(self, file: str) -> str:
-        file_prefix = re.sub(r"\W",  "", self.title[0:10].encode('ascii', errors='ignore').decode().replace(' ', '_'))
-        filename = file_prefix + '_' + file
+        article_slug = self.get_article_slug()
+        filename = article_slug + '_' + file
         return os.path.join(ASSET_DIR, 'pdf', filename)
 
     def to_xml_element(self) -> Element:
@@ -231,14 +237,14 @@ def download_images(article: Article) -> Article:
     the web copy.
     """
     img_tag: Tag
-    for img_tag in article.content.find_all('img'):
+    for index, img_tag in enumerate(article.content.find_all('img')):
         # try block because sometimes images without sources get added (don't ask me why)
         try:
             url = img_tag.attrs['src']
         except KeyError:
             continue
         filename = os.path.basename(urllib.parse.urlparse(url).path)
-        local_path = article.get_image_location(filename)
+        local_path = article.get_image_location(filename, index)
         print(f"Downloading {local_path}\t{url}", flush=True)
         try:
             urllib.request.urlretrieve(url, local_path)
