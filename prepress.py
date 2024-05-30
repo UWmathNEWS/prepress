@@ -32,7 +32,7 @@ CURRENT_DIR: str
 #273 pt, at 300 DPI
 DPI = 300
 IMAGE_WIDTH_DEFAULT = 1138
-USER_AGENT = "curl/7.61" # 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:81.0) Gecko/20100101 Firefox/81.0'
+USER_AGENT = "curl/7.61" # 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0'
 
 # Name of category for approved articles
 APPROVED_CATEGORY = "Editor okayed"
@@ -100,7 +100,7 @@ def is_for_issue(article_tag: Element, issue_num: str) -> bool:
     has_correct_tag = False
     has_approval = False
     for category in article_tag.findall('category'):
-        if category.get('domain') == 'post_tag' and category.text == issue_num:
+        if category.get('domain') == 'post_tag' and category.text == issue_num: 
             has_correct_tag = True
         elif category.get('domain') == 'category' and category.text == APPROVED_CATEGORY:
             has_approval = True
@@ -134,6 +134,9 @@ def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
                 article.postscript = BeautifulSoup(meta_value, 'html.parser')
         #we will post process this later
         article_text_content = article_tag.find('content:encoded', XML_NS).text
+        if article_text_content is None:
+            article_text_content = ''
+            
         article.content = BeautifulSoup(article_text_content, 'html.parser')
         # TODO: instead of appending to content, process postscript separately
         if article.postscript is not None:
