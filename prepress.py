@@ -247,9 +247,10 @@ def download_images(article: Article) -> Article:
         local_path = article.get_image_location(filename, index)
         print(f"Downloading {local_path}\t{url}", flush=True)
         try:
-            urllib.request.urlretrieve(url, local_path)
+            _, headers = urllib.request.urlretrieve(url, local_path)
             #resize the image to a reasonable size
-            resize_image(local_path)
+            if headers["Content-Type"] != "image/svg+xml":
+                resize_image(local_path)
             #InDesign recognizes <link href=""> tags for images
             img_tag.name = 'link'
             img_tag.attrs['href'] = 'file://' + local_path
