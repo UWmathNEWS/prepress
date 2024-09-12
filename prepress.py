@@ -59,7 +59,7 @@ class Article:
         # generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
         # plus hash of article content to prevent article title collisions
         file_prefix = re.sub(r"\W",  "", self.title[0:10].encode('ascii', errors='ignore').decode().replace(' ', '_'))
-        article_hash = hashlib.sha1(str(self.content).encode("utf-8")).hexdigest()[:6]
+        article_hash = hashlib.sha1(str(self.title).encode("utf-8")).hexdigest()[:6]
         return file_prefix + "_" + article_hash
 
     def get_image_location(self, file: str, index: int) -> str:
