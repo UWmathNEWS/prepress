@@ -192,7 +192,7 @@ def convert_imgur_embeds(article: Article) -> Article:
     imgur_regex = re.compile(rf'''\[embed\]{imgur_url_regex.pattern}\[/embed\]''', re.VERBOSE | re.ASCII)
     imgur_url_templ = 'https://i.imgur.com/{hash}{ext}'
 
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         for match in imgur_regex.finditer(text_tag):
@@ -297,7 +297,7 @@ def compile_latex(article: Article) -> Article:
     # Memo to store validity and compile status of latex
     latex_valid_memo: Dict[str, bool] = dict()
     latex_compiled_memo: Dict[str, bool] = dict()
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         for match in p.finditer(text_tag):
@@ -328,7 +328,7 @@ def replace_inline_code(article: Article) -> Article:
     """
     text_tag: bs4.NavigableString
     p = re.compile(r'`([\s\S]+?)`')
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         for match in p.finditer(text_tag):
@@ -399,7 +399,7 @@ def replace_ellipses(article: Article) -> Article:
     """Replaces "..." with one single ellipse character
     """
     text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         new_tag = text_tag.replace('...', '…')
@@ -412,7 +412,7 @@ def replace_dashes(article: Article) -> Article:
     Also replaces hyphens in numeric ranges with en dashes.
     """
     text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         new_tag = re.sub(r'(?<=\d) ?--? ?(?=\d)', '–', text_tag) \
@@ -443,7 +443,7 @@ def replace_smart_quotes(s: str):
 
 def add_smart_quotes(article: Article) -> Article:
     """Replaces regular quotes with smart quotes. Works on double and single quotes."""
-    text_tags: List[bs4.NavigableString] = list(article.content.find_all(text=True))
+    text_tags: List[bs4.NavigableString] = list(article.content.find_all(string=True))
     # some hackery here: breaks between text tags might lead to invalid quotes
     # example: "|<em>text</em>|" will make the first quote a right quote, since
     # it's at the end of its text tag.
@@ -479,7 +479,7 @@ def remove_extraneous_spaces(article: Article) -> Article:
     """Removes extraneous spaces after punctuation.
     """
     text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         new_tag = re.sub(r'(?<=[.,;?!‽]) +', ' ', text_tag)
@@ -490,7 +490,7 @@ def normalize_newlines(article: Article) -> Article:
     """Normalizes newlines to Unix-style LF
     """
     text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         new_tag = text_tag.replace('\r\n', '\n')
         text_tag.replace_with(new_tag)
     return article
@@ -500,7 +500,7 @@ def replace_newlines(article: Article) -> Article:
     them in InDesign, which will treat newlines as paragraph breaks otherwise.
     """
     text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if not keep_verbatim(text_tag):
             # Non-verbatim tags must be handled separately, and we must make sure it's not a
             # double line-break (i.e. paragraph break). We also don't replace it if it's
@@ -530,7 +530,7 @@ def add_footnotes(article: Article) -> Article:
     text_tag: bs4.NavigableString
     inline_regex = re.compile(r'\[(\d*)\]')
     footnote_counter = 1  # is the expected number of the next footnote
-    for text_tag in article.content.find_all(text=True):
+    for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
         for match in inline_regex.finditer(text_tag):
