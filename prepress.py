@@ -51,16 +51,16 @@ class Article:
         self.author = ''
         self.title = ''
         self.subtitle = ''
+        self.id = ''
         # content and postscript is stored as a beautiful soup tree
         self.content: BeautifulSoup = None
         self.postscript: BeautifulSoup = None
 
     def get_article_slug(self) -> str:
         # generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
-        # plus hash of article content to prevent article title collisions
+        # plus article id to prevent article title collisions
         file_prefix = re.sub(r"\W",  "", self.title[0:10].encode('ascii', errors='ignore').decode().replace(' ', '_'))
-        article_hash = hashlib.sha1(str(self.title).encode("utf-8")).hexdigest()[:6]
-        return file_prefix + "_" + article_hash
+        return file_prefix + "_" + self.id
 
     def get_image_location(self, file: str, index: int) -> str:
         article_slug = self.get_article_slug()
@@ -126,6 +126,7 @@ def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
         #possible optimization, instead of calling find several times,
         #loop through tag children once and parse out data as we run into it
         article.title = article_tag.find('title').text
+        article.id = article_tag.find('wp:post_id', XML_NS).text
         # go through post meta tags
         post_meta_tags = article_tag.findall('wp:postmeta', XML_NS)
         for post_meta_tag in post_meta_tags:
