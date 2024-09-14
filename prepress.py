@@ -486,6 +486,17 @@ def remove_extraneous_spaces(article: Article) -> Article:
         text_tag.replace_with(new_tag)
     return article
 
+def remove_multi_spaces(article: Article) -> Article:
+    """Removes double, triple, etc., spaces.
+    """
+    text_tag: bs4.NavigableString
+    for text_tag in article.content.find_all(string=True):
+        if keep_verbatim(text_tag): continue
+
+        new_tag = re.sub(r'([^\s])(\s)+([^\s])', '\1 \3', text_tag)
+        text_tag.replace_with(new_tag)
+    return article
+
 def normalize_newlines(article: Article) -> Article:
     """Normalizes newlines to Unix-style LF
     """
@@ -566,6 +577,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     replace_dashes,
     add_smart_quotes,
     remove_extraneous_spaces,
+    remove_multi_spaces,
     add_footnotes
 ]
 
