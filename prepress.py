@@ -476,24 +476,13 @@ def add_smart_quotes(article: Article) -> Article:
     return article
 
 def remove_extraneous_spaces(article: Article) -> Article:
-    """Removes extraneous spaces after punctuation.
+    """Removes extraneous spaces after characters.
     """
     text_tag: bs4.NavigableString
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
-        new_tag = re.sub(r'(?<=[.,;?!‽]) +', ' ', text_tag)
-        text_tag.replace_with(new_tag)
-    return article
-
-def remove_multi_spaces(article: Article) -> Article:
-    """Removes double, triple, etc., spaces.
-    """
-    text_tag: bs4.NavigableString
-    for text_tag in article.content.find_all(string=True):
-        if keep_verbatim(text_tag): continue
-
-        new_tag = re.sub(r'([^\s])(\s)+([^\s])', '\1 \3', text_tag)
+        new_tag = re.sub(r'(?<=[A-Za-z0-9$.,;?!‽]) +', ' ', text_tag)
         text_tag.replace_with(new_tag)
     return article
 
@@ -577,7 +566,6 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     replace_dashes,
     add_smart_quotes,
     remove_extraneous_spaces,
-    remove_multi_spaces,
     add_footnotes
 ]
 
