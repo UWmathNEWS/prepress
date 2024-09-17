@@ -11,6 +11,7 @@ import urllib.error
 import html
 import shutil
 import hashlib
+import string
 import subprocess
 
 import bs4
@@ -476,14 +477,35 @@ def add_smart_quotes(article: Article) -> Article:
     return article
 
 def remove_extraneous_spaces(article: Article) -> Article:
-    """Removes extraneous spaces after punctuation.
+    """Removes extraneous spaces after characters.
     """
     text_tag: bs4.NavigableString
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
-        new_tag = re.sub(r'(?<=[.,;?!‽]) +', ' ', text_tag)
+        base_alphanumeric = 'A-Za-z0-9'
+        accent_characters = 'À-ÖØ-öø-ÿ'
+        punctuation = string.punctuation + '‽'
+
+        single_spaced_chars = base_alphanumeric + accent_characters + punctuation
+
+        # a number of articles come to us with punctuation followed by a double space, where the 
+        #  first space is an nbsp. maybe it is inserted by a particular text editor?
+        #  if we remove them directly, we can stop worrying about nbsps from that point on
+        #  (who would be unintentionally adding consecutive nbsps)
+        nbsp_sp_pairs = r'(?<=[{}])(\u00A0 )+'.format(single_spaced_chars)
+        new_tag = re.sub(nbsp_sp_pairs, ' ', text_tag)
+
+        nbsp_sps_found = new_tag != text_tag 
+
+        # with the nbsp-sp pairs removed, we can remove all other n-tuple breaking spaces
+        multi_sp = r'(?<=[{}]) +'.format(single_spaced_chars)
+        new_tag = re.sub(multi_sp, ' ', new_tag)
+
         text_tag.replace_with(new_tag)
+
+        if(nbsp_sps_found or new_tag != text_tag):
+            print("Removed extraneous spaces in article \"" + article.title + "\"" + (". Some were nbsp-sp pairs." if nbsp_sps_found else ""))
     return article
 
 def normalize_newlines(article: Article) -> Article:
@@ -603,7 +625,7 @@ if __name__ == "__main__":
     articles = filter_articles(tree, args.issue)
     print('Post-processing articles...', flush=True)
     for process in POST_PROCESS:
-        print(f'Post-process pass: {process.__name__}', flush=True)
+        print(f'Preparing post-process pass: {process.__name__}', flush=True)
         articles = map(process, articles)
     print(f'Post-processing...', flush=True)
     root = Element('issue')
