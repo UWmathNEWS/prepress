@@ -488,13 +488,24 @@ def remove_extraneous_spaces(article: Article) -> Article:
         punctuation = string.punctuation + '‽'
 
         single_spaced_chars = base_alphanumeric + accent_characters + punctuation
-        multispaces = r'(?<=[{}]) +'.format(single_spaced_chars)
 
-        new_tag = re.sub(multispaces, ' ', text_tag)
+        # a number of articles come to us with punctuation followed by a double space, where the 
+        #  first space is an nbsp. maybe it is inserted by a particular text editor?
+        #  if we remove them directly, we can stop worrying about nbsps from that point on
+        #  (who would be unintentionally adding consecutive nbsps)
+        nbsp_sp_pairs = r'(?<=[{}])(\u00A0 )+'.format(single_spaced_chars)
+        new_tag = re.sub(nbsp_sp_pairs, ' ', text_tag)
+
+        nbsp_sps_found = new_tag != text_tag 
+
+        # with the nbsp-sp pairs removed, we can remove all other n-tuple breaking spaces
+        multi_sp = r'(?<=[{}]) +'.format(single_spaced_chars)
+        new_tag = re.sub(multi_sp, ' ', new_tag)
+
         text_tag.replace_with(new_tag)
 
-        if(new_tag != text_tag):
-            print("Removed extraneous spaces in article \"" + article.title + "\"")
+        if(nbsp_sps_found or new_tag != text_tag):
+            print("Removed extraneous spaces in article \"" + article.title + "\"" + (". Some were nbsp-sp pairs." if nbsp_sps_found else ""))
     return article
 
 def normalize_newlines(article: Article) -> Article:
