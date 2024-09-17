@@ -11,6 +11,7 @@ import urllib.error
 import html
 import shutil
 import hashlib
+import string
 import subprocess
 
 import bs4
@@ -482,8 +483,18 @@ def remove_extraneous_spaces(article: Article) -> Article:
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag): continue
 
-        new_tag = re.sub(r'(?<=[A-Za-z0-9$.,;?!‽]) +', ' ', text_tag)
+        base_alphanumeric = 'A-Za-z0-9'
+        accent_characters = 'À-ÖØ-öø-ÿ'
+        punctuation = string.punctuation + '‽'
+
+        single_spaced_chars = base_alphanumeric + accent_characters + punctuation
+        multispaces = r'(?<=[{}]) +'.format(single_spaced_chars)
+
+        new_tag = re.sub(multispaces, ' ', text_tag)
         text_tag.replace_with(new_tag)
+
+        if(new_tag != text_tag):
+            print("Removed extraneous spaces in article \"" + article.title + "\"")
     return article
 
 def normalize_newlines(article: Article) -> Article:
@@ -603,7 +614,7 @@ if __name__ == "__main__":
     articles = filter_articles(tree, args.issue)
     print('Post-processing articles...', flush=True)
     for process in POST_PROCESS:
-        print(f'Post-process pass: {process.__name__}', flush=True)
+        print(f'Preparing post-process pass: {process.__name__}', flush=True)
         articles = map(process, articles)
     print(f'Post-processing...', flush=True)
     root = Element('issue')
