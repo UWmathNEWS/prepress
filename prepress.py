@@ -113,6 +113,12 @@ def is_for_issue(article_tag: Element, issue_num: str) -> bool:
             has_approval = True
     return has_correct_tag and has_approval
 
+def preprocess_html(html: str) -> str:
+    """Used to process content strings before they are parsed as HTML"""
+    html = re.sub(r"\[caption([^\]]*)\]", r"<caption\1>", html)
+    html = re.sub(r"\[/caption\]", "</caption>", html)
+    return html
+
 def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
     """Given an ElementTree parsed from an XML dump, returns a list
     of Article instances containing all the articles tagged with issue_num.
@@ -144,6 +150,8 @@ def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
         article_text_content = article_tag.find('content:encoded', XML_NS).text
         if article_text_content is None:
             article_text_content = ''
+
+        article_text_content = preprocess_html(article_text_content)
             
         article.content = BeautifulSoup(article_text_content, 'html.parser')
         # TODO: instead of appending to content, process postscript separately
@@ -568,6 +576,28 @@ def add_footnotes(article: Article) -> Article:
                 footnote_counter += 1
     return article
 
+def process_captions(article: Article) -> Article:
+    """Replaces Wordpress's weird square bracket caption tags with <figcaption>"""
+    for caption in article.content.find_all("caption"):
+        # wordpress puts the image inside the caption tag
+        # sometimes it's an <img> and sometimes it's <a><img></a>
+        images = []
+        non_images = []
+        for child in caption.children:
+            if isinstance(child, Tag) and child.name in ("a", "img"):
+                images.append(child)
+            else:
+                non_images.append(child)
+
+        # wordpress likes to add an extra space at the beginning of the caption
+        if non_images and isinstance(non_images[0], str) and non_images[0][0] == ' ':
+            non_images[0] = non_images[0][1:]
+
+        figcaption = Tag(name="figcaption")
+        figcaption.extend(non_images)
+        caption.replace_with(*images, figcaption)
+    return article
+
 """POST_PROCESS is a list of functions that take Article instances and return Article instances.
 
 For each article we parse, every function in this list will be applied to it in order, and the
@@ -576,6 +606,7 @@ result saved back to the article list.
 Use this to make any changes to articles you need before export, as well as to generate assets.
 """
 POST_PROCESS: List[Callable[[Article], Article]] = [
+    process_captions,
     normalize_newlines,
     convert_imgur_embeds,
     download_images,
@@ -588,7 +619,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     replace_dashes,
     add_smart_quotes,
     remove_extraneous_spaces,
-    add_footnotes
+    add_footnotes,
 ]
 
 def create_asset_dirs():
