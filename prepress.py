@@ -132,7 +132,7 @@ def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
         article = Article()
         #possible optimization, instead of calling find several times,
         #loop through tag children once and parse out data as we run into it
-        article.title = article_tag.find('title').text
+        article.title = article_tag.find('title').text or '[no title]'
         article.id = article_tag.find('wp:post_id', XML_NS).text
         # go through post meta tags
         post_meta_tags = article_tag.findall('wp:postmeta', XML_NS)
