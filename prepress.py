@@ -577,7 +577,9 @@ def add_footnotes(article: Article) -> Article:
     return article
 
 def process_captions(article: Article) -> Article:
-    """Replaces Wordpress's weird square bracket caption tags with <figcaption>"""
+    """Replaces Wordpress's weird square bracket caption tags (which have already
+    been converted to HTML tags) with <figcaption>
+    """
     for caption in article.content.find_all("caption"):
         # wordpress puts the image inside the caption tag
         # sometimes it's an <img> and sometimes it's <a><img></a>
