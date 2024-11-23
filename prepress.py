@@ -115,8 +115,42 @@ def is_for_issue(article_tag: Element, issue_num: str) -> bool:
 
 def preprocess_html(html: str) -> str:
     """Used to process content strings before they are parsed as HTML"""
-    html = re.sub(r"\[caption([^\]]*)\]", r"<caption\1>", html)
-    html = re.sub(r"\[/caption\]", "</caption>", html)
+    subs = [
+        (r"\[caption([^\]]*)\]", r"<caption\1>"),
+        (r"\[/caption\]", "</caption>"),
+        (r"\[emphasis 1\]", r"<em>"),
+        (r"\[/emphasis 1\]", "</em>"),
+        (r"\[emphasis 2\]", r"<em2>"),
+        (r"\[/emphasis 2\]", "</em2>"),
+        (r"\[emphasis 3\]", r"<em3>"),
+        (r"\[/emphasis 3\]", "</em3>"),
+        (r"\[emphasis 4\]", r"<em4>"),
+        (r"\[/emphasis 4\]", "</em4>"),
+        (r"\[em1\]", r"<em>"),
+        (r"\[/em1\]", "</em>"),
+        (r"\[em2\]", r"<em2>"),
+        (r"\[/em2\]", "</em2>"),
+        (r"\[em3\]", r"<em3>"),
+        (r"\[/em3\]", "</em3>"),
+        (r"\[em4\]", r"<em4>"),
+        (r"\[/em4\]", "</em4>"),
+        (r"\[stress 1\]", r"<strong>"),
+        (r"\[/stress 1\]", "</strong>"),
+        (r"\[stress 2\]", r"<strong2>"),
+        (r"\[/stress 2\]", "</strong2>"),
+        (r"\[str1\]", r"<strong>"),
+        (r"\[/str1\]", "</strong>"),
+        (r"\[str2\]", r"<strong2>"),
+        (r"\[/str2\]", "</strong2>"),
+        (r"\[article\]", r"<aref>"),
+        (r"\[/article\]", "</aref>"),
+        (r"\[aref\]", r"<aref>"),
+        (r"\[/aref\]", "</aref>"),
+        (r"\[math\]", r"<imath>"),
+        (r"\[/math\]", "</imath>"),
+    ]
+    for pattern, sub in subs:
+        html = re.sub(pattern, sub, html)
     return html
 
 def filter_articles(tree: ElementTree, issue_num: str) -> List[Article]:
