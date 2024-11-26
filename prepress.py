@@ -634,6 +634,18 @@ def process_captions(article: Article) -> Article:
         caption.replace_with(*images, figcaption)
     return article
 
+def convert_emphasis_2(article: Article) -> Article:
+    """Converts nested bold/italic tags into a single <em2> tag."""
+    for b in article.content.find_all(["b", "strong"]):
+        for i in b.find_all(["i", "em"]):
+            i.name = "em2"
+
+    for i in article.content.find_all(["i", "em"]):
+        for b in i.find_all(["b", "strong"]):
+            b.name = "em2"
+
+    return article
+
 """POST_PROCESS is a list of functions that take Article instances and return Article instances.
 
 For each article we parse, every function in this list will be applied to it in order, and the
@@ -656,6 +668,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     add_smart_quotes,
     remove_extraneous_spaces,
     add_footnotes,
+    convert_emphasis_2,
 ]
 
 def create_asset_dirs():
