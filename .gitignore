@@ -7,7 +7,7 @@
 
 #ignore script generated files
 assets/
-issue.xml
+./issue.xml
 
 #ignore wordpress dump
 wordpress_dump.xml

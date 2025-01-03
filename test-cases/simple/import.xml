@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/"
+>
+
+<channel>
+	<title>mathNEWS</title>
+	<link>http://mathnews.uwaterloo.ca</link>
+	<description>Waterloo&#039;s Bastion of Erudite Thought</description>
+	<pubDate>Fri, 14 Feb 2020 00:00:00 +0000</pubDate>
+	<language>en-US</language>
+	<wp:wxr_version>1.2</wp:wxr_version>
+	<wp:base_site_url>http://mathnews.uwaterloo.ca</wp:base_site_url>
+	<wp:base_blog_url>http://mathnews.uwaterloo.ca</wp:base_blog_url>
+
+	<wp:author><wp:author_id>1</wp:author_id><wp:author_login>mathNEWS</wp:author_login><wp:author_email>mathNEWS@gmail.com</wp:author_email><wp:author_display_name><![CDATA[mathNEWS Editor]]></wp:author_display_name><wp:author_first_name><![CDATA[mathNEWS]]></wp:author_first_name><wp:author_last_name><![CDATA[Editor]]></wp:author_last_name></wp:author>
+
+	<wp:category><wp:term_id>9</wp:term_id><wp:category_nicename>editor-okayed</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[Editor okayed]]></wp:cat_name></wp:category>
+	<wp:category><wp:term_id>1</wp:term_id><wp:category_nicename>uncategorized</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[Uncategorized]]></wp:cat_name></wp:category>
+	<wp:category><wp:term_id>34</wp:term_id><wp:category_nicename>proofread</wp:category_nicename><wp:category_parent>uncategorized</wp:category_parent><wp:cat_name><![CDATA[Proofread]]></wp:cat_name></wp:category>
+
+	<wp:tag><wp:term_id>271</wp:term_id><wp:tag_slug>v1xxiy</wp:tag_slug><wp:tag_name><![CDATA[v1xxiy]]></wp:tag_name></wp:tag>
+	<item>
+		<title>The C&amp;Ds of UW</title>
+		<link>http://mathnews.uwaterloo.ca/</link>
+		<pubDate>Mon, 30 Nov -0001 00:00:00 +0000</pubDate>
+		<dc:creator><![CDATA[mathNEWS]]></dc:creator>
+		<guid isPermaLink="false">http://mathnews.uwaterloo.ca/</guid>
+		<description></description>
+		<content:encoded><![CDATA[Many people here at UW go to Tim Horton's for their morning coffee, as they provide fast double doubles on the go. However, for those of us who prefer cheaper coffee, or just don't like Tim Hortons, there are faculty-run C&amp;Ds. I've been to all of them, except for the Environment C&amp;D. They have something called fair trade coffee, which is higher in price compared to the coffee in the other C&amp;Ds.
+
+In my opinion, the Math C&amp;D is the spaciest, with more selection than the other C&amp;Ds, and each cup of coffee is about 75 cents. The Engineering C&amp;D has a similar selection to Math's, but the space inside the C&amp;D is cramped. The coffee is cheap if you bring in your own mug (about 60 cents). The Science C&amp;D is the most relaxed one, and you can even bring backpacks into it! The price of each cup is the same as Engineering, but there is a limited variety of coffees and snacks.
+
+Math and Engineering C&amp;Ds have different types of flavoured coffee, hot chocolate/cappuccinos (both pricier than coffee), a selection of donuts, and other foods. Neither of the C&amp;Ds allow for backpacks in the store, nor accept Watcard - only the Math C&amp;D accepts debit cards. The Math and Engineering C&amp;Ds are also the only ones that have paid employees.
+
+The Math C&amp;D is located on the 3rd floor of MC, Engineering on the first floor of CPH (on the south side), and Science is close to the Bio building entrance under the overpass to the ESC building.
+
+This is only a tidbit of the C&amp;Ds of the university; I recommend exploring each one and discovering your favourite one. Enjoy your coffee and donuts!
+
+quiz]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>008</wp:post_id>
+		<wp:post_date>0000-00-00 00:00:00</wp:post_date>
+		<wp:post_date_gmt>0000-00-00 00:00:00</wp:post_date_gmt>
+		<wp:comment_status>open</wp:comment_status>
+		<wp:ping_status>open</wp:ping_status>
+		<wp:post_name></wp:post_name>
+		<wp:status>draft</wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:menu_order>0</wp:menu_order>
+		<wp:post_type>post</wp:post_type>
+		<wp:post_password></wp:post_password>
+		<wp:is_sticky>0</wp:is_sticky>
+		<category domain="category" nicename="editor-okayed"><![CDATA[Editor okayed]]></category>
+		<category domain="category" nicename="uncategorized"><![CDATA[Uncategorized]]></category>
+		<category domain="post_tag" nicename="v1xxiy"><![CDATA[v1xxiy]]></category>
+		<wp:postmeta>
+			<wp:meta_key>_edit_last</wp:meta_key>
+			<wp:meta_value><![CDATA[11]]></wp:meta_value>
+		</wp:postmeta>
+	</item>
+</channel>
+</rss>
