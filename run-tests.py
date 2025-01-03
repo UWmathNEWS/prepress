@@ -1,4 +1,3 @@
-import difflib
 import os
 import subprocess
 import xml.etree.ElementTree as ET
@@ -27,15 +26,24 @@ def elements_equal(e1, e2):
 
 def run_test(test_name: str):
     """Runs the given test"""
+    print(f"Running test: {test_name}")
+
     directory = os.path.join(test_directory, test_name)
 
     infile = os.path.join(directory, "import.xml")
     outfile = os.path.join(directory, "issue.xml")
 
-    subprocess.run(
+    prepress_result = subprocess.run(
         ["python", os.path.join(os.getcwd(), "prepress.py"), "v1xxiy", infile],
         stdout=subprocess.DEVNULL,
     )
+
+    if prepress_result.returncode != 0:
+        print(f"\033[91mprepress failed to run test: {test_name}\033[0m")
+        print(
+            "There is likely debug output above. If not, try running the test file directly"
+        )
+        exit()
 
     generated_output_filepath = os.path.join(os.getcwd(), "issue.xml")
 
