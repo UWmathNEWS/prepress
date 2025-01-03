@@ -15,7 +15,6 @@ def elements_equal(e1, e2):
     if e1.tag != e2.tag:
         return False
     if e1.text != e2.text:
-        print("found failure", e1, e2)
         return False
     if e1.attrib != e2.attrib:
         return False

@@ -587,6 +587,23 @@ def add_smart_quotes(article: Article) -> Article:
     return article
 
 
+def punctuation_in_quotes(article: Article) -> Article:
+    """Ensures punctuation is inside quotation marks"""
+    text_tag: bs4.NavigableString
+    inline_regex = re.compile(r"([’”])([\.\!?;\:\,])")
+    for text_tag in article.content.find_all(string=True):
+        if keep_verbatim(text_tag):
+            continue
+
+        new_tag = text_tag
+        for match in inline_regex.finditer(text_tag):
+            new_tag = new_tag.replace(match[0], match[2] + match[1])
+
+        text_tag.replace_with(new_tag)
+
+    return article
+
+
 def remove_extraneous_spaces(article: Article) -> Article:
     """Removes extraneous spaces after characters."""
     text_tag: bs4.NavigableString
@@ -767,6 +784,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     replace_ellipses,
     replace_dashes,
     add_smart_quotes,
+    punctuation_in_quotes,
     remove_extraneous_spaces,
     footnote_after_punctuation,
     add_footnotes,
