@@ -5,6 +5,9 @@ import xml.etree.ElementTree as ET
 
 """
 Get all tests from the /tests/ directory, run them, and compare to expected outputs
+
+WARNING: this is super finicky at the moment. if you can find a better way to compare the compiled XML output, 
+you'll probably find it incredibly valuable to do so
 """
 
 
