@@ -651,6 +651,26 @@ def normalize_newlines(article: Article) -> Article:
     return article
 
 
+def hairspace_fractions_out_of_10(article: Article) -> Article:
+    """For all fractions out of 10, surround the slash with hairspaces to
+    break fraction formatting, as this is likely a rating
+    """
+    text_tag: bs4.NavigableString
+    inline_regex = re.compile(r"([0-9]+)/10")
+    for text_tag in article.content.find_all(string=True):
+        if keep_verbatim(text_tag):
+            continue
+
+        new_tag = text_tag
+        for match in inline_regex.finditer(text_tag):
+            # the below spaces are hair spaces
+            new_tag = new_tag.replace(match[0], f"{match[1]} / 10")
+
+        text_tag.replace_with(new_tag)
+
+    return article
+
+
 def replace_newlines(article: Article) -> Article:
     """Replaces newlines with the Unicode LINE SEPARATOR character (U+2028). This preserves
     them in InDesign, which will treat newlines as paragraph breaks otherwise.
@@ -789,6 +809,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     footnote_after_punctuation,
     add_footnotes,
     convert_emphasis_2,
+    hairspace_fractions_out_of_10,
 ]
 
 
