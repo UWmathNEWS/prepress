@@ -20,12 +20,11 @@ from bs4 import BeautifulSoup, Tag
 from PIL import Image
 
 from plugins.preformatted import add_linenos, highlight_code, wrap_lines
-from plugins.smart_quotes import get_double_quote, get_quote_direction, get_single_quote
-from plugins.syntax_highlighting import (
-    SyntaxHighlightType,
-    get_syntax_highlight_tag_name,
-)
-from util import LINE_SEPARATOR, VERBATIM_TAGS, html_escape, keep_verbatim
+from plugins.smart_quotes import (get_double_quote, get_quote_direction,
+                                  get_single_quote)
+from plugins.syntax_highlighting import (SyntaxHighlightType,
+                                         get_syntax_highlight_tag_name)
+from util import LINE_SEPARATOR, VERBATIM_TAGS, html_escape, keep_verbatim, is_link_component
 
 # The directory to store generated assets. Can be changed by command line argument.
 ASSET_DIR = "assets"
@@ -512,6 +511,34 @@ def replace_ellipses(article: Article) -> Article:
     return article
 
 
+# need <link href="{href}">
+def replace_links(article: Article) -> Article:
+    """Replaces links in <link></link> tags"""
+    text_tag: bs4.NavigableString
+    valid_url_chars = "[A-Za-z0-9-._~:/?#\\[\\]@!$&'()*+,;%=]"
+    valid_url_chars_no_punctuation = "[A-Za-z0-9-_~/#\\[\\]@$&'()*+%=]"
+    prefix = f"{valid_url_chars}+"
+    suffix = f"({valid_url_chars}*{valid_url_chars_no_punctuation}+)?"
+    # try identifying links by (valid link characters) + (some reasonable TLD) + (more valid chars)
+    inline_regex = re.compile(
+        rf"({prefix}(\.com|\.ca|\.org\.gov)({suffix})?)"
+    )
+    print(inline_regex)
+    for text_tag in article.content.find_all(string=True):
+        if keep_verbatim(text_tag):
+            continue
+
+        for match in inline_regex.finditer(text_tag):
+            # Check match for provided numbering -- if it exists, then use it
+            link_tag = Tag(name="link", attrs={"href": match[1]})
+            link_tag.string = str(match[1])
+            text_tag = replace_text_with_tag(
+                match[0], link_tag, text_tag, article=article
+            )
+
+    return article
+
+
 def replace_dashes(article: Article) -> Article:
     """Replaces hyphens used as spacing, that is, when they are surrounded with spaces,
     with em dashes.
@@ -519,7 +546,7 @@ def replace_dashes(article: Article) -> Article:
     """
     text_tag: bs4.NavigableString
     for text_tag in article.content.find_all(string=True):
-        if keep_verbatim(text_tag):
+        if keep_verbatim(text_tag) or is_link_component(text_tag):
             continue
 
         new_tag = (
@@ -705,7 +732,7 @@ def replace_newlines(article: Article) -> Article:
 
 
 def add_footnotes(article: Article) -> Article:
-    """Replaces footnotes in <sup></sup> tags, [\d] format, or *, **, etc."""
+    """Replaces footnotes in <sup></sup> tags, [\\d] format, or *, **, etc."""
     text_tag: bs4.NavigableString
     inline_regex = re.compile(r"\[(\d*)\]")
     footnote_counter = 1  # is the expected number of the next footnote
@@ -730,7 +757,7 @@ def add_footnotes(article: Article) -> Article:
 
 
 def footnote_after_punctuation(article: Article) -> Article:
-    """Replaces footnotes in <sup></sup> tags, [\d] format, or *, **, etc."""
+    """Replaces footnotes in <sup></sup> tags, [\\d] format, or *, **, etc."""
     text_tag: bs4.NavigableString
     inline_regex = re.compile(r"(\[\d*\])([\.,!?;:])")
     for text_tag in article.content.find_all(string=True):
@@ -802,6 +829,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     format_code_blocks,
     replace_newlines,
     replace_ellipses,
+    replace_links,
     replace_dashes,
     add_smart_quotes,
     punctuation_in_quotes,

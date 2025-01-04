@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rss version="2.0"
+  xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:wp="http://wordpress.org/export/1.2/"
+>
+
+  <channel>
+    <title>mathNEWS</title>
+    <link>http://mathnews.uwaterloo.ca</link>
+    <description>Waterloo&#039;s Bastion of Erudite Thought</description>
+    <pubDate>Fri, 14 Feb 2020 00:00:00 +0000</pubDate>
+    <language>en-US</language>
+
+    <wp:author>
+      <wp:author_id>1</wp:author_id>
+      <wp:author_login>mathNEWS</wp:author_login>
+      <wp:author_email>mathNEWS@gmail.com</wp:author_email>
+      <wp:author_display_name><![CDATA[mathNEWS Editor]]></wp:author_display_name>
+      <wp:author_first_name><![CDATA[mathNEWS]]></wp:author_first_name>
+      <wp:author_last_name><![CDATA[Editor]]></wp:author_last_name>
+    </wp:author>
+
+    <wp:category>
+      <wp:term_id>9</wp:term_id>
+      <wp:category_nicename>editor-okayed</wp:category_nicename>
+      <wp:category_parent></wp:category_parent>
+      <wp:cat_name><![CDATA[Editor okayed]]></wp:cat_name>
+    </wp:category>
+    <wp:category>
+      <wp:term_id>1</wp:term_id>
+      <wp:category_nicename>uncategorized</wp:category_nicename>
+      <wp:category_parent></wp:category_parent>
+      <wp:cat_name><![CDATA[Uncategorized]]></wp:cat_name>
+    </wp:category>
+    <wp:category>
+      <wp:term_id>34</wp:term_id>
+      <wp:category_nicename>proofread</wp:category_nicename>
+      <wp:category_parent>uncategorized</wp:category_parent>
+      <wp:cat_name><![CDATA[Proofread]]></wp:cat_name>
+    </wp:category>
+
+    <wp:tag>
+      <wp:term_id>271</wp:term_id>
+      <wp:tag_slug>v1xxiy</wp:tag_slug>
+      <wp:tag_name><![CDATA[v1xxiy]]></wp:tag_name>
+    </wp:tag>
+    <item>
+      <title>test article yippee</title>
+      <link>http://mathnews.uwaterloo.ca/</link>
+      <pubDate>Mon, 30 Nov -0001 00:00:00 +0000</pubDate>
+      <dc:creator><![CDATA[mathNEWS]]></dc:creator>
+      <guid isPermaLink="false">http://mathnews.uwaterloo.ca/</guid>
+      <description></description>
+      <content:encoded>
+      <![CDATA[My favourite website is mathnews.uwaterloo.ca/wp-login, it tastes so good.]]>
+      </content:encoded>
+      <excerpt:encoded><![CDATA[]]></excerpt:encoded>
+      <wp:post_id>008</wp:post_id>
+      <wp:status>draft</wp:status>
+      <wp:post_type>post</wp:post_type>
+      <category domain="category" nicename="editor-okayed"><![CDATA[Editor okayed]]></category>
+      <category domain="category" nicename="uncategorized"><![CDATA[Uncategorized]]></category>
+      <category domain="post_tag" nicename="v1xxiy"><![CDATA[v1xxiy]]></category>
+    </item>
+  </channel>
+</rss>

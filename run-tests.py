@@ -10,17 +10,29 @@ you'll probably find it incredibly valuable to do so
 """
 
 
-def elements_equal(e1, e2):
+def print_difference(exp, act):
+    print(f"\033[91mUnexpected difference found. Something in the below two lines of output is different:\033[0m")
+    print(f"\033[91mExpected:\033[0m \"{exp}\"")
+    print(f"\033[91mActual:\033[0m \"{act}\"")
+
+
+def elements_equal(exp, act):
     """source: https://stackoverflow.com/questions/7905380/testing-equivalence-of-xml-etree-elementtree"""
-    if e1.tag != e2.tag:
+    if exp.tag != act.tag:
+        print_difference(exp.tag, act.tag)
         return False
-    if e1.text != e2.text:
+    if exp.text != act.text:
+        print_difference(exp.text, act.text)
         return False
-    if e1.attrib != e2.attrib:
+    if (exp.tail or "").strip() != (act.tail or "").strip():
+        print_difference((exp.tail or "").strip(), (act.tail or "").strip())
         return False
-    if len(e1) != len(e2):
+    if exp.attrib != act.attrib:
+        print_difference(exp.attrib, act.attrib)
         return False
-    return all(elements_equal(c1, c2) for c1, c2 in zip(e1, e2))
+    if len(exp) != len(act):
+        return False
+    return all(elements_equal(c1, c2) for c1, c2 in zip(exp, act))
 
 
 def run_test(test_name: str):
@@ -30,7 +42,7 @@ def run_test(test_name: str):
     directory = os.path.join(test_directory, test_name)
 
     infile = os.path.join(directory, "import.xml")
-    outfile = os.path.join(directory, "issue.xml")
+    expected_output_filepath = os.path.join(directory, "issue.xml")
 
     prepress_result = subprocess.run(
         ["python", os.path.join(os.getcwd(), "prepress.py"), "v1xxiy", infile],
@@ -46,14 +58,16 @@ def run_test(test_name: str):
 
     generated_output_filepath = os.path.join(os.getcwd(), "issue.xml")
 
-    expected_xml = ET.parse(outfile)
+    expected_xml = ET.parse(expected_output_filepath)
     actual_xml = ET.parse(generated_output_filepath)
 
     expected_out = ET.tostring(expected_xml.getroot())
     actual_out = ET.tostring(actual_xml.getroot())
 
     if elements_equal(expected_xml.getroot(), actual_xml.getroot()) == False:
-        print(f"\033[91mTest failed: {test_name}\033[0m")
+        print(f"\n\033[91mTest failed: {test_name}\033[0m")
+        print(f"\n\033[91mGranular error data should be logged above this message.\033[0m")
+        print(f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n")
 
         e_lines = expected_out.splitlines()
         a_lines = actual_out.splitlines()
