@@ -820,6 +820,50 @@ def convert_profquotes(article: Article) -> Article:
     return article
 
 
+def fix_lists(article: Article) -> Article:
+    """
+    Converts HTML lists into a format friendlier for InDesign.
+
+    InDesign doesn't understand the <li> element or nested lists. We replace li elements with
+    newlines, which get treated as paragraph breaks, and replace each level of nesting with
+    its own tag (ul2, ul3, etc.) For top-level elements, we also give the first item in each
+    list its own tag (ul_first, ol_first) for special formatting.
+    """
+    for list_tag in article.content.find_all(["ul", "ol", "profquotes"]):
+        new_children = []
+        for child in list_tag.children:
+            if isinstance(child, str):
+                continue
+            elif child.name == "li":
+                new_children.extend(child.contents)
+            new_children.append("\n")
+        list_tag.clear()
+        list_tag.extend(new_children[:-1])
+
+    for ul in article.content.find_all("ul"):
+        parents = [parent.name for parent in ul.parents]
+        level = (parents.count("ul") + parents.count("ul2") + parents.count("ul3")
+            + parents.count("ul4") + parents.count("ul5") + 1)
+        if 1 < level <= 5:
+            new_tag_name = f"ul{level}"
+            ul.name = new_tag_name
+
+        if level == 1:
+            ul.contents[0].wrap(Tag(name="ul_first"))
+
+    for ol in article.content.find_all("ol"):
+        parents = [parent.name for parent in ol.parents]
+        level = parents.count("ol") + parents.count("ol2") + parents.count("ol3") + 1
+        if 1 < level <= 3:
+            new_tag_name = f"ol{level}"
+            ol.name = new_tag_name
+
+        if level == 1:
+            ol.contents[0].wrap(Tag(name="ol_first"))
+
+    return article
+
+
 """POST_PROCESS is a list of functions that take Article instances and return Article instances.
 
 For each article we parse, every function in this list will be applied to it in order, and the
@@ -848,6 +892,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     convert_emphasis_2,
     convert_profquotes,
     hairspace_fractions_out_of_10,
+    fix_lists,
 ]
 
 
