@@ -45,9 +45,6 @@ XML_NS = {
     "wp": "http://wordpress.org/export/1.2/",
 }
 
-# this is illegal or whatever, but I am the law.
-urllib.request.URLopener.version = USER_AGENT
-
 
 class Article:
 
@@ -323,10 +320,13 @@ def download_images(article: Article) -> Article:
         local_path = article.get_image_location(filename, index)
         print(f"Downloading {local_path}\t{url}", flush=True)
         try:
-            _, headers = urllib.request.urlretrieve(url, local_path)
-            # resize the image to a reasonable size
-            if headers["Content-Type"] != "image/svg+xml":
-                resize_image(local_path)
+            request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(request) as response:
+                with open(local_path, "wb") as f:
+                    f.write(response.read())
+                # resize the image to a reasonable size
+                if response.headers["Content-Type"] != "image/svg+xml":
+                    resize_image(local_path)
             # InDesign recognizes <link href=""> tags for images
             img_tag.name = "link"
             img_tag.attrs["href"] = "file://" + local_path
@@ -811,6 +811,15 @@ def convert_emphasis_2(article: Article) -> Article:
     return article
 
 
+def convert_profquotes(article: Article) -> Article:
+    """Converts unordered lists in articles titled "profQUOTES" into <profquotes> elements."""
+    if article.title == "profQUOTES":
+        for ul in article.content.find_all("ul"):
+            ul.name = "profquotes"
+
+    return article
+
+
 """POST_PROCESS is a list of functions that take Article instances and return Article instances.
 
 For each article we parse, every function in this list will be applied to it in order, and the
@@ -837,6 +846,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     footnote_after_punctuation,
     add_footnotes,
     convert_emphasis_2,
+    convert_profquotes,
     hairspace_fractions_out_of_10,
 ]
 
