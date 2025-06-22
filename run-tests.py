@@ -11,9 +11,11 @@ you'll probably find it incredibly valuable to do so
 
 
 def print_difference(exp, act):
-    print(f"\033[91mUnexpected difference found. Something in the below two lines of output is different:\033[0m")
-    print(f"\033[91mExpected:\033[0m \"{exp}\"")
-    print(f"\033[91mActual:\033[0m \"{act}\"")
+    print(
+        f"\033[91mUnexpected difference found. Something in the below two lines of output is different:\033[0m"
+    )
+    print(f'\033[91mExpected:\033[0m "{exp}"')
+    print(f'\033[91mActual:\033[0m "{act}"')
 
 
 def elements_equal(exp, act):
@@ -66,8 +68,12 @@ def run_test(test_name: str):
 
     if elements_equal(expected_xml.getroot(), actual_xml.getroot()) == False:
         print(f"\n\033[91mTest failed: {test_name}\033[0m")
-        print(f"\n\033[91mGranular error data should be logged above this message.\033[0m")
-        print(f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n")
+        print(
+            f"\n\033[91mGranular error data should be logged above this message.\033[0m"
+        )
+        print(
+            f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n"
+        )
 
         e_lines = expected_out.splitlines()
         a_lines = actual_out.splitlines()

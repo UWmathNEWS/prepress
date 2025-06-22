@@ -20,11 +20,18 @@ from bs4 import BeautifulSoup, Tag
 from PIL import Image
 
 from plugins.preformatted import add_linenos, highlight_code, wrap_lines
-from plugins.smart_quotes import (get_double_quote, get_quote_direction,
-                                  get_single_quote)
-from plugins.syntax_highlighting import (SyntaxHighlightType,
-                                         get_syntax_highlight_tag_name)
-from util import LINE_SEPARATOR, VERBATIM_TAGS, html_escape, keep_verbatim, is_link_component
+from plugins.smart_quotes import get_double_quote, get_quote_direction, get_single_quote
+from plugins.syntax_highlighting import (
+    SyntaxHighlightType,
+    get_syntax_highlight_tag_name,
+)
+from util import (
+    LINE_SEPARATOR,
+    VERBATIM_TAGS,
+    html_escape,
+    is_link_component,
+    keep_verbatim,
+)
 
 # The directory to store generated assets. Can be changed by command line argument.
 ASSET_DIR = "assets"
@@ -520,9 +527,7 @@ def replace_links(article: Article) -> Article:
     prefix = f"{valid_url_chars}+"
     suffix = f"({valid_url_chars}*{valid_url_chars_no_punctuation}+)?"
     # try identifying links by (valid link characters) + (some reasonable TLD) + (more valid chars)
-    inline_regex = re.compile(
-        rf"({prefix}(\.com|\.ca|\.org\.gov)({suffix})?)"
-    )
+    inline_regex = re.compile(rf"({prefix}(\.com|\.ca|\.org\.gov)({suffix})?)")
     print(inline_regex)
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag):
@@ -734,19 +739,25 @@ def replace_newlines(article: Article) -> Article:
 def add_footnotes(article: Article) -> Article:
     """Replaces footnotes in <sup></sup> tags, [\\d] format, or *, **, etc."""
     text_tag: bs4.NavigableString
-    inline_regex = re.compile(r"\[(\d*)\]")
+    footnote_regex = re.compile(r"\[([0-9§]*)\]")
     footnote_counter = 1  # is the expected number of the next footnote
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag):
             continue
 
-        for match in inline_regex.finditer(text_tag):
+        for match in footnote_regex.finditer(text_tag):
             # Check match for provided numbering -- if it exists, then use it
             footnote_num = footnote_counter
-            if len(match[1]):
-                footnote_num = int(match[1])
+            footnote_contents = match[1]
+            if len(footnote_contents):
+                if "§" in footnote_contents:
+                    first_number = re.search(r"([0-9])", footnote_contents)
+                    print(footnote_contents, first_number)
+                    footnote_num = int(first_number[0])
+                else:
+                    footnote_num = int(footnote_contents)
             sup_tag = Tag(name="sup")
-            sup_tag.string = str(footnote_num)
+            sup_tag.string = str(footnote_contents)
             text_tag = replace_text_with_tag(
                 match[0], sup_tag, text_tag, article=article
             )
@@ -759,7 +770,7 @@ def add_footnotes(article: Article) -> Article:
 def footnote_after_punctuation(article: Article) -> Article:
     """Replaces footnotes in <sup></sup> tags, [\\d] format, or *, **, etc."""
     text_tag: bs4.NavigableString
-    inline_regex = re.compile(r"(\[\d*\])([\.,!?;:])")
+    inline_regex = re.compile(r"(\[[§\d]*\])([\.,!?;:])")
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag):
             continue
@@ -842,8 +853,14 @@ def fix_lists(article: Article) -> Article:
 
     for ul in article.content.find_all("ul"):
         parents = [parent.name for parent in ul.parents]
-        level = (parents.count("ul") + parents.count("ul2") + parents.count("ul3")
-            + parents.count("ul4") + parents.count("ul5") + 1)
+        level = (
+            parents.count("ul")
+            + parents.count("ul2")
+            + parents.count("ul3")
+            + parents.count("ul4")
+            + parents.count("ul5")
+            + 1
+        )
         if 1 < level <= 5:
             new_tag_name = f"ul{level}"
             ul.name = new_tag_name
