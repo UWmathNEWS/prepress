@@ -35,8 +35,11 @@ from util import (
 
 # The directory to store generated assets. Can be changed by command line argument.
 ASSET_DIR = "assets"
-# The location of the output file. Can be changed by command line argument'
-OUTPUT_FILE = "issue.xml"
+# The suffix of the output files 
+# "main_articles_<suffix>"
+# "secondary_articles_<suffix>"
+# Can be changed by command line argument
+OUTPUT_FILE_SUFFIX = "issue.xml"
 # The current working directory
 CURRENT_DIR: str
 # 273 pt, at 300 DPI
@@ -63,6 +66,10 @@ class Article:
         # content and postscript is stored as a beautiful soup tree
         self.content: BeautifulSoup = None
         self.postscript: BeautifulSoup = None
+
+    def is_secondary_article(self) -> bool:
+        """Check, based on our naming conventions, if the article is a secondary."""
+        return self.title.strip().endswith("^")
 
     def get_article_slug(self) -> str:
         # generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
@@ -919,6 +926,42 @@ def create_asset_dirs():
     if not os.path.isdir(os.path.join(ASSET_DIR, "pdf")):
         os.makedirs(os.path.join(ASSET_DIR, "pdf"))
 
+def write_issue(root: Element, output_file_path: str, current_dir_path: str):
+    # do some processing first
+    # Remove extraneous lines
+    transformed = "\n".join(
+            [
+                line
+                for line in html.unescape(
+                    ElementTree.tostring(root, encoding="unicode")
+                    ).split("\n")
+                if line.strip() != ""
+                ]
+            )
+    # Separate articles cleanly
+    transformed = "</article>\n<article>".join(
+            [article for article in transformed.split("</article><article>")]
+            )
+    # Separate title, subtitle, and content cleanly
+    transformed = "</title>\n<content>".join(
+            [article for article in transformed.split("</title><content>")]
+            )
+    transformed = "</title>\n<subtitle>".join(
+            [article for article in transformed.split("</title><subtitle>")]
+            )
+    transformed = "</subtitle>\n<content>".join(
+            [article for article in transformed.split("</subtitle><content>")]
+            )
+    # Remove extraneous items from beginning and end of lists
+    transformed = "<ul>".join([thing for thing in transformed.split("<ul>\n")])
+    transformed = "</ul>".join([thing for thing in transformed.split("\n</ul>")])
+    transformed = "<ol>".join([thing for thing in transformed.split("<ol>\n")])
+    transformed = "</ol>".join([thing for thing in transformed.split("\n</ol>")])
+
+    os.chdir(current_dir_path)
+    with open(output_file_path, "w", encoding="utf-8") as output_file:
+        output_file.write(transformed)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="article export for mathNEWS")
@@ -927,7 +970,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o",
         "--xml_output",
-        help="location of the file to output to",
+        help="suffix of the output files",
         default="issue.xml",
     )
     parser.add_argument(
@@ -941,54 +984,36 @@ if __name__ == "__main__":
         ASSET_DIR = os.path.join(CURRENT_DIR, args.assets)
     shutil.rmtree(ASSET_DIR, ignore_errors=True)
     create_asset_dirs()
-    OUTPUT_FILE = args.xml_output
+    OUTPUT_FILE_SUFFIX = args.xml_output
     if not os.path.isfile(args.xml_dump):
         print(f"{args.xml_dump} does not exist.")
         exit(1)
+
     print("Parsing XML...", flush=True)
     tree = ElementTree.parse(args.xml_dump)
+
     print("Filtering articles...", flush=True)
     articles = filter_articles(tree, args.issue)
+
     print("Post-processing articles...", flush=True)
     for process in POST_PROCESS:
         print(f"Preparing post-process pass: {process.__name__}", flush=True)
         articles = map(process, articles)
+
     print(f"Post-processing...", flush=True)
-    root = Element("issue")
+    main_articles_root = Element("issue")
+    secondary_articles_root = Element("issue")
     for article in articles:
-        root.append(article.to_xml_element())
-    print(f"Writing to {OUTPUT_FILE}...", flush=True)
-    os.chdir(CURRENT_DIR)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as output_file:
-        # do some processing first
-        # Remove extraneous lines
-        transformed = "\n".join(
-            [
-                line
-                for line in html.unescape(
-                    ElementTree.tostring(root, encoding="unicode")
-                ).split("\n")
-                if line.strip() != ""
-            ]
-        )
-        # Separate articles cleanly
-        transformed = "</article>\n<article>".join(
-            [article for article in transformed.split("</article><article>")]
-        )
-        # Separate title, subtitle, and content cleanly
-        transformed = "</title>\n<content>".join(
-            [article for article in transformed.split("</title><content>")]
-        )
-        transformed = "</title>\n<subtitle>".join(
-            [article for article in transformed.split("</title><subtitle>")]
-        )
-        transformed = "</subtitle>\n<content>".join(
-            [article for article in transformed.split("</subtitle><content>")]
-        )
-        # Remove extraneous items from beginning and end of lists
-        transformed = "<ul>".join([thing for thing in transformed.split("<ul>\n")])
-        transformed = "</ul>".join([thing for thing in transformed.split("\n</ul>")])
-        transformed = "<ol>".join([thing for thing in transformed.split("<ol>\n")])
-        transformed = "</ol>".join([thing for thing in transformed.split("\n</ol>")])
-        output_file.write(transformed)
-    print("Issue written.")
+        if article.is_secondary_article():
+            secondary_articles_root.append(article.to_xml_element())
+        else:
+            main_articles_root.append(article.to_xml_element())
+
+    main_articles_output_file = "main_articles_" + OUTPUT_FILE_SUFFIX
+    secondary_articles_output_file = "secondary_articles_" + OUTPUT_FILE_SUFFIX
+    print(f"Writing main articles to {main_articles_output_file}...", flush=True)
+    write_issue(main_articles_root, main_articles_output_file, CURRENT_DIR)
+    print(f"Writing secondary articles to {secondary_articles_output_file}...", flush=True)
+    write_issue(secondary_articles_root, secondary_articles_output_file, CURRENT_DIR)
+
+    print("Issues written.")

@@ -36,6 +36,38 @@ def elements_equal(exp, act):
         return False
     return all(elements_equal(c1, c2) for c1, c2 in zip(exp, act))
 
+def handle_test_failure(test_name, expected_out, actual_out):
+    print(f"\n\033[91mTest failed: {test_name}\033[0m")
+    print(
+        f"\n\033[91mGranular error data should be logged above this message.\033[0m"
+    )
+    print(
+        f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n"
+    )
+
+    e_lines = expected_out.splitlines()
+    a_lines = actual_out.splitlines()
+
+    if len(e_lines) != len(a_lines):
+        if len(e_lines) > len(a_lines):
+            print("Expected more lines of output than given.")
+        elif len(e_lines) < len(a_lines):
+            print("Expected less lines of output than given.")
+        print(f"\033[91mExpected\033[0m")
+        print(expected_out)
+        print(f"\033[91mActual\033[0m")
+        print(actual_out)
+        exit()
+
+    for i in range(len(e_lines)):
+        if e_lines[i] != a_lines[i]:
+            print(f"\033[91mUnexpected difference on line {i}:\033[0m")
+            print(f"\033[91mExpected:\033[0m")
+            print(e_lines[i])
+            print(f"\033[91mActual:\033[0m")
+            print(a_lines[i])
+
+    exit()
 
 def run_test(test_name: str):
     """Runs the given test"""
@@ -44,7 +76,8 @@ def run_test(test_name: str):
     directory = os.path.join(test_directory, test_name)
 
     infile = os.path.join(directory, "import.xml")
-    expected_output_filepath = os.path.join(directory, "issue.xml")
+    expected_main_articles_output_filepath = os.path.join(directory, "main_articles_issue.xml")
+    expected_secondary_articles_output_filepath = os.path.join(directory, "secondary_articles_issue.xml")
 
     prepress_result = subprocess.run(
         ["python", os.path.join(os.getcwd(), "prepress.py"), "v1xxiy", infile],
@@ -58,46 +91,23 @@ def run_test(test_name: str):
         )
         exit()
 
-    generated_output_filepath = os.path.join(os.getcwd(), "issue.xml")
+    generated_main_articles_output_filepath = os.path.join(os.getcwd(), "main_articles_issue.xml")
+    expected_main_xml = ET.parse(expected_main_articles_output_filepath)
+    actual_main_xml = ET.parse(generated_main_articles_output_filepath)
+    expected_main_out = ET.tostring(expected_main_xml.getroot())
+    actual_main_out = ET.tostring(actual_main_xml.getroot())
 
-    expected_xml = ET.parse(expected_output_filepath)
-    actual_xml = ET.parse(generated_output_filepath)
+    if elements_equal(expected_main_xml.getroot(), actual_main_xml.getroot()) == False:
+        handle_test_failure(test_name + " (main articles)", expected_main_out, actual_main_out)
 
-    expected_out = ET.tostring(expected_xml.getroot())
-    actual_out = ET.tostring(actual_xml.getroot())
+    generated_secondary_articles_output_filepath = os.path.join(os.getcwd(), "secondary_articles_issue.xml")
+    expected_secondary_xml = ET.parse(expected_secondary_articles_output_filepath)
+    actual_secondary_xml = ET.parse(generated_secondary_articles_output_filepath)
+    expected_secondary_out = ET.tostring(expected_secondary_xml.getroot())
+    actual_secondary_out = ET.tostring(actual_secondary_xml.getroot())
 
-    if elements_equal(expected_xml.getroot(), actual_xml.getroot()) == False:
-        print(f"\n\033[91mTest failed: {test_name}\033[0m")
-        print(
-            f"\n\033[91mGranular error data should be logged above this message.\033[0m"
-        )
-        print(
-            f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n"
-        )
-
-        e_lines = expected_out.splitlines()
-        a_lines = actual_out.splitlines()
-
-        if len(e_lines) != len(a_lines):
-            if len(e_lines) > len(a_lines):
-                print("Expected more lines of output than given.")
-            elif len(e_lines) < len(a_lines):
-                print("Expected less lines of output than given.")
-            print(f"\033[91mExpected\033[0m")
-            print(expected_out)
-            print(f"\033[91mActual\033[0m")
-            print(actual_out)
-            exit()
-
-        for i in range(len(e_lines)):
-            if e_lines[i] != a_lines[i]:
-                print(f"\033[91mUnexpected difference on line {i}:\033[0m")
-                print(f"\033[91mExpected:\033[0m")
-                print(e_lines[i])
-                print(f"\033[91mActual:\033[0m")
-                print(a_lines[i])
-
-        exit()
+    if elements_equal(expected_secondary_xml.getroot(), actual_secondary_xml.getroot()) == False:
+        handle_test_failure(test_name + " (secondary articles)", expected_secondary_out, actual_secondary_out)
 
 
 test_directory = os.path.join(os.getcwd(), "test-cases")
