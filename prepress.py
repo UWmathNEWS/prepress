@@ -69,7 +69,7 @@ class Article:
 
     def is_secondary_article(self) -> bool:
         """Check, based on our naming conventions, if the article is a secondary."""
-        return self.title.strip().endswith("^")
+        return self.title.strip().startswith("^") or self.title.strip().endswith("^")
 
     def get_article_slug(self) -> str:
         # generate a slug by trimming the title, replacing non-ascii chars, and replacing spaces
