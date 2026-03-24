@@ -15,6 +15,7 @@ from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, SubElement
 
 import bs4
+import colorama
 import pylatex
 from bs4 import BeautifulSoup, Tag
 from PIL import Image
@@ -927,6 +928,24 @@ def create_asset_dirs():
         os.makedirs(os.path.join(ASSET_DIR, "pdf"))
 
 
+def catch_process_errors(
+    article: Article,
+    process: Callable[[Article], Article],
+):
+    try:
+        return process(article)
+    except Exception as e:
+        print(
+            colorama.Fore.RED
+            + colorama.Style.BRIGHT
+            + f'Article "{article.title}" by {article.author} failed to process step {process.__name__}\033[0m'
+            + colorama.Fore.RESET
+            + colorama.Style.RESET_ALL
+        )
+
+        raise e
+
+
 def write_issue(root: Element, output_file_path: str, current_dir_path: str):
     # do some processing first
     # Remove extraneous lines
@@ -965,6 +984,7 @@ def write_issue(root: Element, output_file_path: str, current_dir_path: str):
 
 
 if __name__ == "__main__":
+    colorama.init()
     parser = argparse.ArgumentParser(description="article export for mathNEWS")
     parser.add_argument("issue", help="the issue number to export for, e.g, v141i3")
     parser.add_argument("xml_dump", help="location of the XML dump to read from")
@@ -999,7 +1019,10 @@ if __name__ == "__main__":
     print("Post-processing articles...", flush=True)
     for process in POST_PROCESS:
         print(f"Preparing post-process pass: {process.__name__}", flush=True)
-        articles = map(process, articles)
+        articles = map(
+            lambda article, process=process: catch_process_errors(article, process),
+            articles,
+        )
 
     print(f"Post-processing...", flush=True)
     main_articles_root = Element("issue")
