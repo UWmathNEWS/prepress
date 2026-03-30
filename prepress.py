@@ -35,7 +35,7 @@ from util import (
 
 # The directory to store generated assets. Can be changed by command line argument.
 ASSET_DIR = "assets"
-# The suffix of the output files 
+# The suffix of the output files
 # "main_articles_<suffix>"
 # "secondary_articles_<suffix>"
 # Can be changed by command line argument
@@ -926,32 +926,33 @@ def create_asset_dirs():
     if not os.path.isdir(os.path.join(ASSET_DIR, "pdf")):
         os.makedirs(os.path.join(ASSET_DIR, "pdf"))
 
+
 def write_issue(root: Element, output_file_path: str, current_dir_path: str):
     # do some processing first
     # Remove extraneous lines
     transformed = "\n".join(
-            [
-                line
-                for line in html.unescape(
-                    ElementTree.tostring(root, encoding="unicode")
-                    ).split("\n")
-                if line.strip() != ""
-                ]
-            )
+        [
+            line
+            for line in html.unescape(
+                ElementTree.tostring(root, encoding="unicode")
+            ).split("\n")
+            if line.strip() != ""
+        ]
+    )
     # Separate articles cleanly
     transformed = "</article>\n<article>".join(
-            [article for article in transformed.split("</article><article>")]
-            )
+        [article for article in transformed.split("</article><article>")]
+    )
     # Separate title, subtitle, and content cleanly
     transformed = "</title>\n<content>".join(
-            [article for article in transformed.split("</title><content>")]
-            )
+        [article for article in transformed.split("</title><content>")]
+    )
     transformed = "</title>\n<subtitle>".join(
-            [article for article in transformed.split("</title><subtitle>")]
-            )
+        [article for article in transformed.split("</title><subtitle>")]
+    )
     transformed = "</subtitle>\n<content>".join(
-            [article for article in transformed.split("</subtitle><content>")]
-            )
+        [article for article in transformed.split("</subtitle><content>")]
+    )
     # Remove extraneous items from beginning and end of lists
     transformed = "<ul>".join([thing for thing in transformed.split("<ul>\n")])
     transformed = "</ul>".join([thing for thing in transformed.split("\n</ul>")])
@@ -1013,7 +1014,9 @@ if __name__ == "__main__":
     secondary_articles_output_file = "secondary_articles_" + OUTPUT_FILE_SUFFIX
     print(f"Writing main articles to {main_articles_output_file}...", flush=True)
     write_issue(main_articles_root, main_articles_output_file, CURRENT_DIR)
-    print(f"Writing secondary articles to {secondary_articles_output_file}...", flush=True)
+    print(
+        f"Writing secondary articles to {secondary_articles_output_file}...", flush=True
+    )
     write_issue(secondary_articles_root, secondary_articles_output_file, CURRENT_DIR)
 
     print("Issues written.")

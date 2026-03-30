@@ -36,11 +36,10 @@ def elements_equal(exp, act):
         return False
     return all(elements_equal(c1, c2) for c1, c2 in zip(exp, act))
 
+
 def handle_test_failure(test_name, expected_out, actual_out):
     print(f"\n\033[91mTest failed: {test_name}\033[0m")
-    print(
-        f"\n\033[91mGranular error data should be logged above this message.\033[0m"
-    )
+    print(f"\n\033[91mGranular error data should be logged above this message.\033[0m")
     print(
         f"\033[91mMore data below is included to help you to debug the issue.\033[0m\n"
     )
@@ -69,6 +68,7 @@ def handle_test_failure(test_name, expected_out, actual_out):
 
     exit()
 
+
 def run_test(test_name: str):
     """Runs the given test"""
     print(f"Running test: {test_name}")
@@ -76,8 +76,12 @@ def run_test(test_name: str):
     directory = os.path.join(test_directory, test_name)
 
     infile = os.path.join(directory, "import.xml")
-    expected_main_articles_output_filepath = os.path.join(directory, "main_articles_issue.xml")
-    expected_secondary_articles_output_filepath = os.path.join(directory, "secondary_articles_issue.xml")
+    expected_main_articles_output_filepath = os.path.join(
+        directory, "main_articles_issue.xml"
+    )
+    expected_secondary_articles_output_filepath = os.path.join(
+        directory, "secondary_articles_issue.xml"
+    )
 
     prepress_result = subprocess.run(
         ["python", os.path.join(os.getcwd(), "prepress.py"), "v1xxiy", infile],
@@ -91,23 +95,36 @@ def run_test(test_name: str):
         )
         exit()
 
-    generated_main_articles_output_filepath = os.path.join(os.getcwd(), "main_articles_issue.xml")
+    generated_main_articles_output_filepath = os.path.join(
+        os.getcwd(), "main_articles_issue.xml"
+    )
     expected_main_xml = ET.parse(expected_main_articles_output_filepath)
     actual_main_xml = ET.parse(generated_main_articles_output_filepath)
     expected_main_out = ET.tostring(expected_main_xml.getroot())
     actual_main_out = ET.tostring(actual_main_xml.getroot())
 
     if elements_equal(expected_main_xml.getroot(), actual_main_xml.getroot()) == False:
-        handle_test_failure(test_name + " (main articles)", expected_main_out, actual_main_out)
+        handle_test_failure(
+            test_name + " (main articles)", expected_main_out, actual_main_out
+        )
 
-    generated_secondary_articles_output_filepath = os.path.join(os.getcwd(), "secondary_articles_issue.xml")
+    generated_secondary_articles_output_filepath = os.path.join(
+        os.getcwd(), "secondary_articles_issue.xml"
+    )
     expected_secondary_xml = ET.parse(expected_secondary_articles_output_filepath)
     actual_secondary_xml = ET.parse(generated_secondary_articles_output_filepath)
     expected_secondary_out = ET.tostring(expected_secondary_xml.getroot())
     actual_secondary_out = ET.tostring(actual_secondary_xml.getroot())
 
-    if elements_equal(expected_secondary_xml.getroot(), actual_secondary_xml.getroot()) == False:
-        handle_test_failure(test_name + " (secondary articles)", expected_secondary_out, actual_secondary_out)
+    if (
+        elements_equal(expected_secondary_xml.getroot(), actual_secondary_xml.getroot())
+        == False
+    ):
+        handle_test_failure(
+            test_name + " (secondary articles)",
+            expected_secondary_out,
+            actual_secondary_out,
+        )
 
 
 test_directory = os.path.join(os.getcwd(), "test-cases")
