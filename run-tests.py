@@ -2,6 +2,8 @@ import os
 import subprocess
 import xml.etree.ElementTree as ET
 
+import colorama
+
 """
 Get all tests from the /tests/ directory, run them, and compare to expected outputs
 
@@ -89,9 +91,11 @@ def run_test(test_name: str):
     )
 
     if prepress_result.returncode != 0:
-        print(f"\033[91mprepress failed to run test: {test_name}\033[0m")
+        print(colorama.Fore.YELLOW)
+        print(f"prepress failed to run test: {test_name}")
         print(
             "There is likely debug output above. If not, try running the test file directly"
+            + colorama.Fore.RESET
         )
         exit()
 
@@ -126,6 +130,8 @@ def run_test(test_name: str):
             actual_secondary_out,
         )
 
+
+colorama.init()
 
 test_directory = os.path.join(os.getcwd(), "test-cases")
 
