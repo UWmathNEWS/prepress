@@ -95,6 +95,12 @@ class Article:
         filename = article_slug + "_" + file
         return os.path.join(ASSET_DIR, "pdf", filename)
 
+    def get_length(self) -> int:
+        if self.content is None:
+            return 0
+
+        return len(self.content.get_text())
+
     def to_xml_element(self) -> Element:
         article_tag = Element("article")
 
@@ -1015,6 +1021,7 @@ if __name__ == "__main__":
 
     print("Filtering articles...", flush=True)
     articles = filter_articles(tree, args.issue)
+    articles.sort(key=lambda article: article.get_length())
 
     print("Post-processing articles...", flush=True)
     for process in POST_PROCESS:
