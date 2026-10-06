@@ -1,0 +1,32 @@
+<issue><article><title>a word of unusual size</title>
+<content> one
+abcdefghijklmnopqrstuvwxyzabc is twenty-nine, below the body threshold
+abcdefghijklmnopqrstuvwxyzabcd is thirty, exactly the body threshold
+abcdefghijklmnopqrstuvwxyzabcd​e is thirty-one, one over the body threshold
+abcdefghijklmnopqrstuvwxyzabcd​e​f is thirty-two, two over the body threshold
+Pneumonoultramicroscopicsilico​v​o​l​c​a​n​o​c​o​n​i​o​s​i​s​a​n​d​t​h​e​n​s​o​m​e is fifty-six, a lot over
+chocolate/cappuccinos is twenty-one, and stays whole in body text
+123456789012345678901234567890​1​2​3​4​5​6​7​8​9​0 is a forty character number
+Donaudampfschifffahrtsgesellsc​h​a​f​t​s​k​a​p​i​t​ä​n has a non-ascii character
+abcdefghijklmnopqrstuvwxyzabcd. is thirty-one only because of its period, so it cannot break
+abcdefghijklmnopqrstuvwxyzabcd​e​f​g​h​i. is thirty-six, and must not break before its period
+abcdefghijklmnopqrstuvwxyzabcd​e​f​g​h!? must not break before either of its last two characters
+(abcdefghijklmnopqrstuvwxyzabc​d​e​f​g) counts its brackets, but will not break before the last one
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! is thirty-six characters of pure punctuation
+<em>abcdefghijklmno</em>abcdefghijklmno​p​q​r​s​t is thirty-five across an em tag
+abcdefghij<strong>abcdefghij</strong><em>abcdefghij​k​l​m​n​o</em> is thirty-five across three tags
+<em>abcdefghij</em>abcdefghijklmno is only twenty-five across an em tag, so it is left alone
+<p>abcdefghijklmno</p><p>abcdefghijklmnopqrst</p>
+abcdefghijklmno<br/>abcdefghijklmnopqrst is split by a line break, not an inline tag
+<link href="www.anextremelylongdomainnamethatgoesonandon.com">www.anextremelylongdomainnamethatgoesonandon.com</link> is recognised as a link
+<link href="https://example.org/a/very/long/path/indeed">https://example.org/a/very/long/path/indeed</link> keeps its scheme and stays whole
+<link href="arxiv.org/abs/2401.12345v2">arxiv.org/abs/2401.12345v2</link> and <link href="bit.ly/averylongshortenedlink">bit.ly/averylongshortenedlink</link> have no scheme
+<link href="someone.withaverylongname@uwaterloo.ca">someone.withaverylongname@uwaterloo.ca</link> is an email address
+<em><link href="https://exam">https://exam</link></em><link href="ple.org/a/long/path">ple.org/a/long/path</link> is a URL split across an em tag
+an <a href="https://example.org/x">anchor tag whose abcdefghijklmnopqrstuvwxyzabcdefghi is left alone</a>
+<em><link href="http://mathnews.uwaterloo.ca/iss">http://mathnews.uwaterloo.ca/iss</link></em>ue/v1xxiy/a-long-article-slug is a URL whose first half is recognised as a link
+text <a href="https://example.org/x">anchor</a>abcdefghijklmnopqrstuvwxyzabcdefghijklmn is a long word glued to anchor text, so it counts as part of the link and stays whole
+<link href="example.net/a/long/path/the/old/regex/missed">example.net/a/long/path/the/old/regex/missed</link> is recognised now that the TLD list is fixed
+notaurl.butaverylongwordindeed​y​e​s only looks a little like a domain
+a footnote<sup>1</sup>
+<sup>1</sup> <link href="https://example.org/a/very/long/footnoted/url">https://example.org/a/very/long/footnoted/url</link>       </content></article></issue>

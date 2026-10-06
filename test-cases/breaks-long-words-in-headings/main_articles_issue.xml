@@ -1,0 +1,14 @@
+<issue><article><title>abcdefghijkl​m​n​o​p​q​r​s​t in a title breaks at twelve</title>
+<subtitle>abcdefghijkl​m​n​o​p​q​r​s​t in a subtitle also breaks at twelve</subtitle>
+<content>
+<h1>abcdefghijkl in a heading is exactly the heading threshold</h1>
+<h2>abcdefghijkl​m in a heading is one over</h2>
+<h3>abcdefghijkl​m​n​o​p​q​r​s​t in a heading breaks early</h3>
+<h6>abcdefghijkl​m​n​o​p​q​r​s​t breaks in an h6 too</h6>
+<h2>a heading with <em>abcdefghijkl​m​n​o​p​q​r​s​t</em> nested inside a tag</h2>
+<h2><em>abcdefg</em>abcde​f​g​h is fifteen across an em tag, which is over twelve</h2>
+<h2>a heading holding <a href="https://example.org/x">abcdefghijklmnopqrst</a> as link text</h2>
+<figcaption>abcdefghijkl​m​n​o​p​q​r​s​t in a caption breaks at twelve too</figcaption>
+abcdefghijklmnopqrst is only twenty, so the same word is left alone in body text
+<h2>abcdefghijkl. in a heading is thirteen only because of its period</h2>
+<address>abcdefghijklmnopqrst as an author is set at body size, so it is left alone</address></content></article></issue>
