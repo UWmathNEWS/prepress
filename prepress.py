@@ -10,7 +10,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, SubElement
 
@@ -27,10 +27,14 @@ from plugins.syntax_highlighting import (
     get_syntax_highlight_tag_name,
 )
 from util import (
+    DISCRETIONARY_LINE_BREAK,
+    INLINE_TAGS,
     LINE_SEPARATOR,
     VERBATIM_TAGS,
     html_escape,
+    is_large_text,
     is_link_component,
+    is_link_text,
     keep_verbatim,
 )
 
@@ -50,6 +54,67 @@ USER_AGENT = "curl/7.61"  # 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0)
 
 # Name of category for approved articles
 APPROVED_CATEGORY = "Editor okayed"
+
+# Words longer than this many characters get discretionary line breaks inserted into them, so
+# that InDesign can break them instead of letting them overflow. Headings are set larger, so 
+# a word runs out of room there far sooner
+LONG_WORD_MAX_LENGTH_HEADING = 12
+LONG_WORD_MAX_LENGTH_BODY = 30
+# The characters that may appear inside a URL
+URL_CHARS = r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;%=]"
+# Anything a URL may not end on, so that a URL closing a sentence does not swallow the period,
+# nor the comma in a list of links
+URL_TRAILING_CHARS_REGEX = re.compile(r"[^A-Za-z0-9\-_~/#\[\]@$&'()*+%=]+$")
+# The host part of a URL or an email address
+URL_HOST = r"[A-Za-z0-9\-._~%]+"
+# The domain endings we recognise when a URL announces itself with neither a scheme nor a
+# leading "www.". Add to this list as the paper starts linking to new places
+URL_TLDS = (
+    "com",
+    "ca",
+    "org",
+    "net",
+    "edu",
+    "gov",
+    "io",
+    "ai",
+    "co",
+    "uk",
+    "de",
+    "jp",
+    "me",
+    "dev",
+    "app",
+    "info",
+    "biz",
+    "xyz",
+    "tv",
+    "fm",
+    "ly",
+    "gg",
+    "sh",
+    "to",
+    "cc",
+    "us",
+    "eu",
+    "au",
+    "nz",
+)
+# A URL is recognisable in one of four ways: it carries a scheme, it starts with "www.", it is
+# an email address, or it ends in a domain we know. That last one insists the domain is not
+# followed by more letters, so a missing space after a full stop does not read as a link
+URL_REGEX = re.compile(
+    r"(?:https?://{chars}+"
+    r"|www\.{chars}+"
+    r"|{host}@{host}\.(?:{tlds})"
+    r"|{host}\.(?:{tlds})(?![A-Za-z]){chars}*)".format(
+        chars=URL_CHARS, host=URL_HOST, tlds="|".join(URL_TLDS)
+    )
+)
+
+# Characters we refuse start a line with when breaking, so dont break before when they
+# trail a long word
+TRAILING_PUNCTUATION = string.punctuation + "‘’“”…–—‽"
 
 XML_NS = {
     "content": "http://purl.org/rss/1.0/modules/content/",
@@ -534,26 +599,28 @@ def replace_ellipses(article: Article) -> Article:
 
 # need <link href="{href}">
 def replace_links(article: Article) -> Article:
-    """Replaces links in <link></link> tags"""
+    """Replaces links in <link></link> tags.
+
+    This is the one place that decides what counts as a link, so everything downstream can
+    rely on links being tagged. break_long_words in particular leaves <link> text alone, so
+    a URL this pass fails to recognise is a URL that may get broken across lines.
+    """
     text_tag: bs4.NavigableString
-    valid_url_chars = "[A-Za-z0-9-._~:/?#\\[\\]@!$&'()*+,;%=]"
-    valid_url_chars_no_punctuation = "[A-Za-z0-9-_~/#\\[\\]@$&'()*+%=]"
-    prefix = f"{valid_url_chars}+"
-    suffix = f"({valid_url_chars}*{valid_url_chars_no_punctuation}+)?"
-    # try identifying links by (valid link characters) + (some reasonable TLD) + (more valid chars)
-    inline_regex = re.compile(rf"({prefix}(\.com|\.ca|\.org\.gov)({suffix})?)")
-    print(inline_regex)
     for text_tag in article.content.find_all(string=True):
         if keep_verbatim(text_tag):
             continue
 
-        for match in inline_regex.finditer(text_tag):
-            # Check match for provided numbering -- if it exists, then use it
-            link_tag = Tag(name="link", attrs={"href": match[1]})
-            link_tag.string = str(match[1])
-            text_tag = replace_text_with_tag(
-                match[0], link_tag, text_tag, article=article
-            )
+        for match in URL_REGEX.finditer(text_tag):
+            # the match runs on into the sentence's punctuation, which belongs to the sentence
+            # rather than to the URL
+            url = URL_TRAILING_CHARS_REGEX.sub("", match[0])
+
+            if not url:
+                continue
+
+            link_tag = Tag(name="link", attrs={"href": url})
+            link_tag.string = url
+            text_tag = replace_text_with_tag(url, link_tag, text_tag, article=article)
 
     return article
 
@@ -713,6 +780,198 @@ def hairspace_fractions_out_of_10(article: Article) -> Article:
             new_tag = new_tag.replace(match[0], f"{match[1]} / 10")
 
         text_tag.replace_with(new_tag)
+
+    return article
+
+
+def long_word_break_offsets(
+    text: str,
+    max_length: int,
+    article_title: str,
+    may_break_word: Callable[[int, int], bool] = lambda start, end: True,
+) -> List[int]:
+    """Returns the offsets into text before which a discretionary line break belongs, so that
+    no word is left longer than max_length characters without somewhere to break.
+
+    Every character past the first max_length of a word gets an offset, so that the word may
+    break anywhere from that point on. The end of the word gets none, as there is nothing to
+    break off there, and neither does trailing punctuation, as that punctuation would then be
+    stranded at the start of the next line.
+    """
+    word_regex = re.compile(
+        r"[^\s{}]{{{},}}".format(DISCRETIONARY_LINE_BREAK, max_length + 1)
+    )
+    offsets: List[int] = []
+
+    for match in word_regex.finditer(text):
+        word = match[0]
+
+        if not may_break_word(match.start(), match.end()):
+            continue
+
+        # the last character we are willing to break before is the one before any trailing
+        # punctuation
+        breakable_until = len(word.rstrip(TRAILING_PUNCTUATION))
+
+        if breakable_until <= max_length:
+            # the word is only long because of its punctuation, so there is nowhere safe to break
+            continue
+
+        print(
+            colorama.Fore.YELLOW
+            + f'Large word "{word}" detected in article "{article_title}". '
+            + "Splitting with discretionary line breaks..."
+            + colorama.Fore.RESET
+        )
+        offsets.extend(
+            range(match.start() + max_length, match.start() + breakable_until)
+        )
+
+    return offsets
+
+
+def insert_discretionary_breaks(text: str, offsets: List[int]) -> str:
+    """Returns text with a discretionary line break inserted before each of the given offsets"""
+    pieces = []
+    previous = 0
+
+    for offset in offsets:
+        pieces.append(text[previous:offset])
+        previous = offset
+    pieces.append(text[previous:])
+
+    return DISCRETIONARY_LINE_BREAK.join(pieces)
+
+
+def tags_between(first: bs4.NavigableString, second: bs4.NavigableString) -> List[Tag]:
+    """Returns the tags crossed on the way from one piece of text to the next: those we leave
+    on the way out of first, those we enter on the way into second, and anything standing
+    between them, such as a <br> or an image.
+    """
+    second_ancestors = {id(ancestor) for ancestor in second.parents}
+    # the tags we leave are first's ancestors that second does not share
+    crossed = [
+        ancestor for ancestor in first.parents if id(ancestor) not in second_ancestors
+    ]
+
+    node = first.next_element
+    while node is not None and node is not second:
+        if isinstance(node, Tag):
+            crossed.append(node)
+        node = node.next_element
+
+    return crossed
+
+
+def continuous_text_runs(
+    content: BeautifulSoup,
+) -> List[List[Tuple[bs4.NavigableString, bool]]]:
+    """Groups text into runs that read as continuous text, pairing each piece with whether we
+    are allowed to rewrite it.
+
+    A word can be split across inline tags, as in "<em>unimaginably</em>enormous", and that
+    is one word as far as the reader and InDesign are concerned. Grouping the pieces lets us
+    measure it as one word, rather than as two short ones that each look harmless.
+
+    Link text stays in the run but is marked as not ours to rewrite, so that half a URL in an
+    inline tag is still measured as part of the whole URL. Verbatim text ends a run outright,
+    since it is set apart from the text around it.
+    """
+    runs: List[List[Tuple[bs4.NavigableString, bool]]] = []
+
+    text_tag: bs4.NavigableString
+    for text_tag in content.find_all(string=True):
+        if keep_verbatim(text_tag):
+            # verbatim text also breaks up the text around it
+            runs.append([])
+            continue
+
+        piece = (text_tag, not is_link_text(text_tag))
+
+        if (
+            runs
+            and runs[-1]
+            and all(
+                tag.name in INLINE_TAGS
+                for tag in tags_between(runs[-1][-1][0], text_tag)
+            )
+        ):
+            runs[-1].append(piece)
+        else:
+            runs.append([piece])
+
+    return [run for run in runs if run]
+
+
+def break_long_words(article: Article) -> Article:
+    """Adds discretionary line breaks to words too long for the space they are set in.
+
+    How long is too long depends on where the word ends up: headings and captions get far
+    fewer characters per line than body text, so titles, subtitles, headings and captions are
+    held to LONG_WORD_MAX_LENGTH_HEADING, while body text and the author's byline (which is
+    set in an <address> tag at body size) are held to LONG_WORD_MAX_LENGTH_BODY.
+    """
+    title = article.title
+
+    article.title = insert_discretionary_breaks(
+        article.title,
+        long_word_break_offsets(article.title, LONG_WORD_MAX_LENGTH_HEADING, title),
+    )
+    article.subtitle = insert_discretionary_breaks(
+        article.subtitle,
+        long_word_break_offsets(article.subtitle, LONG_WORD_MAX_LENGTH_HEADING, title),
+    )
+    article.author = insert_discretionary_breaks(
+        article.author,
+        long_word_break_offsets(article.author, LONG_WORD_MAX_LENGTH_BODY, title),
+    )
+
+    for run in continuous_text_runs(article.content):
+        # a run never crosses out of a heading, so its first piece speaks for all of them
+        max_length = (
+            LONG_WORD_MAX_LENGTH_HEADING
+            if is_large_text(run[0][0])
+            else LONG_WORD_MAX_LENGTH_BODY
+        )
+
+        # where the link text sits within the run, as half-open character ranges
+        link_spans = []
+        position = 0
+        for text_tag, breakable in run:
+            if not breakable:
+                link_spans.append((position, position + len(text_tag)))
+            position += len(text_tag)
+
+        def is_part_of_a_link(start: int, end: int, spans=tuple(link_spans)) -> bool:
+            """Whether a word overlaps link text. replace_links can only match a URL inside a
+            single piece of text, so a URL broken over an inline tag arrives here as a tagged
+            half and a bare remainder. A word touching a link is part of that link, and a
+            link must never be broken.
+            """
+            return any(
+                start < span_end and span_start < end for span_start, span_end in spans
+            )
+
+        offsets = long_word_break_offsets(
+            "".join(text_tag for text_tag, _ in run),
+            max_length,
+            title,
+            may_break_word=lambda start, end: not is_part_of_a_link(start, end),
+        )
+
+        if not offsets:
+            continue
+
+        # spread the offsets back over the pieces of text they were measured across
+        start = 0
+        for text_tag, breakable in run:
+            end = start + len(text_tag)
+            within = [offset - start for offset in offsets if start <= offset < end]
+
+            if breakable and within:
+                text_tag.replace_with(insert_discretionary_breaks(text_tag, within))
+
+            start = end
 
     return article
 
@@ -923,6 +1182,7 @@ POST_PROCESS: List[Callable[[Article], Article]] = [
     convert_emphasis_2,
     convert_profquotes,
     hairspace_fractions_out_of_10,
+    break_long_words,
     fix_lists,
 ]
 
